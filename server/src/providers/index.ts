@@ -8,6 +8,8 @@ import { AIHordeProvider } from './aihorde.js';
 import { ModelScopeProvider } from './modelscope.js';
 import { PollinationsProvider } from './pollinations.js';
 import { ZhipuProvider } from './zhipu.js';
+import { OpenCodeFreeProvider } from './opencode-free.js';
+import { AntigravityProvider } from './antigravity.js';
 import { SailProvider } from './sail.js';
 import { AclideProvider } from './aclide.js';
 import { SpekaProvider } from './speka.js';
@@ -279,6 +281,8 @@ register(new OpenAICompatProvider({
   name: 'OpenCode Zen',
   baseUrl: 'https://opencode.ai/zen/v1',
 }));
+register(new OpenCodeFreeProvider());
+register(new AntigravityProvider());
 
 // OVHcloud AI Endpoints — OpenAI-compatible. Two free modes: anonymous
 // (documented 2 req/min per IP per model — observed even stricter across

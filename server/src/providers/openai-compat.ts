@@ -72,9 +72,9 @@ export function inBandCreditsError(text: string | null | undefined): string | nu
 export class OpenAICompatProvider extends BaseProvider {
   readonly platform: Platform;
   readonly name: string;
-  private readonly baseUrl: string;
-  private readonly extraHeaders: Record<string, string>;
-  private readonly validateUrl?: string;
+  protected readonly baseUrl: string;
+  protected readonly extraHeaders: Record<string, string>;
+  protected readonly validateUrl?: string;
   /** Per-provider HTTP timeout override. OpenAI-compatible gateways often buffer
    * non-streaming responses until generation completes, and reasoning models can
    * take >15s before first byte. Default 60000. */
@@ -114,7 +114,7 @@ export class OpenAICompatProvider extends BaseProvider {
    * only accept single tool calls (NVIDIA NIM), force `false` whenever tools are
    * present so the model never tries to emit two at once and 400s; otherwise pass
    * the caller's value through unchanged. See issue #255. */
-  private resolveParallelToolCalls(options?: CompletionOptions): boolean | undefined {
+  protected resolveParallelToolCalls(options?: CompletionOptions): boolean | undefined {
     if (this.forceSingleToolCall && options?.tools && options.tools.length > 0) return false;
     return options?.parallel_tool_calls;
   }
@@ -175,7 +175,7 @@ export class OpenAICompatProvider extends BaseProvider {
    * of the anonymous path, and a real key on a custom endpoint still gets its
    * bearer (#1331): the presence of a credential decides at request time —
    * Kilo, OVH and AI Horde all accept both modes per their docs. */
-  private authHeader(apiKey: string): Record<string, string> {
+  protected authHeader(apiKey: string): Record<string, string> {
     return bearerAuthHeader(apiKey);
   }
 
