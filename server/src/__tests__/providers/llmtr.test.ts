@@ -71,6 +71,12 @@ describe('LLMTR provider', () => {
     await expect(getProvider('llmtr')!.validateKey('bad-key')).resolves.toMatchObject({ valid: false });
   });
 
+  it('treats a 403 about automated validation as inconclusive, not an invalid key (#1390)', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue(json(
+      { error: { type: 'forbidden', message: 'Automated API key validation tools are not supported.' } }, 403));
+    await expect(getProvider('llmtr')!.validateKey('good-key')).rejects.toMatchObject({ status: 403 });
+  });
+
   it.each([200, 400, 402, 404, 429, 500])('keeps inconclusive validation errors inconclusive (%s)', async status => {
     vi.spyOn(global, 'fetch').mockResolvedValue(json({ error: { type: 'other' } }, status, { 'Retry-After': '17' }));
     await expect(getProvider('llmtr')!.validateKey('test-key')).rejects.toMatchObject({ status, retryAfterMs: 17_000 });

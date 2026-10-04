@@ -32,7 +32,23 @@ export class LlmtrProvider extends OpenAICompatProvider {
       body: JSON.stringify({ model: VALIDATION_MODEL, messages: [{ role: 'user', content: 'key validation' }], max_tokens: 1, stream: false }),
     }, providerTimeoutMs(this.platform, 30_000), { timeoutBounds: 'request' });
     recordQuotaObservationsFromResponse(res, { ...quotaContext, platform: this.platform, endpoint: 'key-validation' });
-    if ([401, 403].includes(res.status)) return this.validationResult(res);
+    if ([401, 403].includes(res.status)) {
+      // LLMTR's edge answers some valid keys with a 403 that says automated
+      // key-validation probes are unsupported (#1390: "Automated API key
+      // validation tools are not supported."). That is a verdict about the
+      // PROBE, not the key — the same shape as the Cloudflare challenge guard
+      // in base.ts validationResult. Throw it as inconclusive so health never
+      // auto-disables a working key, and keep the body out of the returned
+      // failure so a later real auth error can still surface.
+      if (res.status === 403) {
+        const body = await res.clone().json().catch(() => null) as { error?: { message?: string; type?: string } } | null;
+        const text = `${body?.error?.message ?? ''} ${body?.error?.type ?? ''}`.toLowerCase();
+        if (/automated|validation tool|bot detection|security system/.test(text)) {
+          throw providerHttpError(res, 'LLMTR blocked automated key validation (HTTP 403); the key was not checked');
+        }
+      }
+      return this.validationResult(res);
+    }
     if (res.status === 404) {
       const body = await res.clone().json().catch(() => null) as { error?: { type?: string } } | null;
       if (body?.error?.type === 'model_not_found') return true;
