@@ -76,6 +76,17 @@ describe('LLMTR provider', () => {
     await expect(getProvider('llmtr')!.validateKey('test-key')).rejects.toMatchObject({ status, retryAfterMs: 17_000 });
   });
 
+  it('#1390: a 403 refusing automated validation probes is inconclusive, never invalid', async () => {
+    // Live LLMTR response to our probe on 2026-10-03, reported on a working key.
+    vi.spyOn(global, 'fetch').mockResolvedValue(json({ error: { type: 'forbidden', message: 'Automated API key validation tools are not supported.' } }, 403));
+    await expect(getProvider('llmtr')!.validateKey('good-key')).rejects.toThrow(/not supported[\s\S]*the key was not checked|the key was not checked/);
+  });
+
+  it('#1390: a plain 403 with an ordinary auth message still reports invalid', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue(json({ error: { type: 'auth_error', message: 'Invalid API key' } }, 403));
+    await expect(getProvider('llmtr')!.validateKey('bad-key')).resolves.toMatchObject({ valid: false });
+  });
+
   it('does not accept an HTML 404', async () => {
     vi.spyOn(global, 'fetch').mockResolvedValue(new Response('not JSON', { status: 404 }));
     await expect(getProvider('llmtr')!.validateKey('test-key')).rejects.toMatchObject({ status: 404 });
