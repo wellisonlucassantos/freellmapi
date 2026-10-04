@@ -20,6 +20,7 @@ import { warnOnEnvDrift } from './lib/env-drift.js';
 import { warnOnRoutingOverrideDrift } from './services/model-weight-overrides.js';
 import { installLogRedaction } from './lib/log-redaction.js';
 import { cleanupExpiredCooldowns } from './services/ratelimit.js';
+import { cleanupRetiredModelHistory } from './services/model-retirement-backfill.js';
 import { loadCacheFromDb } from './services/cache.js';
 
 // Before any other statement runs, so no provider key can reach stdout — users
@@ -62,6 +63,9 @@ async function main() {
   if (expiredCooldowns > 0) {
     console.log(`[ratelimit] cleared ${expiredCooldowns} expired cooldown${expiredCooldowns === 1 ? '' : 's'}`);
   }
+  // #1394: retire models the retained attempt history says are gone upstream —
+  // verdicts the live path never got to see because they predates it.
+  cleanupRetiredModelHistory();
 
   // First-run hardening: when the dashboard is still unclaimed, mint a one-time
   // setup code and log it. A loopback browser can finish setup without it; a

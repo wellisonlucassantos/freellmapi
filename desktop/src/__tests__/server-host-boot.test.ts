@@ -52,6 +52,13 @@ vi.mock('../../../server/src/services/ratelimit.js', () => ({
   }),
 }));
 
+vi.mock('../../../server/src/services/model-retirement-backfill.js', () => ({
+  cleanupRetiredModelHistory: vi.fn(() => {
+    calls.push('cleanupRetiredModelHistory');
+    return 0;
+  }),
+}));
+
 vi.mock('../../../server/src/services/cache.js', () => ({
   loadCacheFromDb: vi.fn(() => {
     calls.push('loadCacheFromDb');
@@ -167,6 +174,7 @@ describe('desktop server boot sequence (#949)', () => {
       'installProcessSafetyNet',
       'initDb',
       'cleanupExpiredCooldowns',
+      'cleanupRetiredModelHistory',
       'restoreProxySettings',
       'loadCacheFromDb',
       'createApp',

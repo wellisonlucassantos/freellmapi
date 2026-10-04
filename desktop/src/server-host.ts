@@ -20,6 +20,7 @@ import { startCustomModelSync } from '../../server/src/services/custom-model-syn
 import { startBuiltinModelDiscovery } from '../../server/src/services/builtin-model-discovery.js';
 import { startBackupScheduler } from '../../server/src/services/backups.js';
 import { cleanupExpiredCooldowns } from '../../server/src/services/ratelimit.js';
+import { cleanupRetiredModelHistory } from '../../server/src/services/model-retirement-backfill.js';
 import { loadCacheFromDb } from '../../server/src/services/cache.js';
 import { startWakeDetect } from '../../server/src/lib/wake-detect.js';
 import { installProcessSafetyNet } from '../../server/src/lib/process-safety-net.js';
@@ -119,6 +120,8 @@ export async function startServer(opts: StartOptions): Promise<ServerHandle> {
   if (expiredCooldowns > 0) {
     console.log(`[ratelimit] cleared ${expiredCooldowns} expired cooldown${expiredCooldowns === 1 ? '' : 's'}`);
   }
+  // #1394: same boot-time retirement backfill as server/src/index.ts.
+  cleanupRetiredModelHistory();
   // #949: the standalone server hydrates its proxy state in index.ts after
   // initDb; this embedder builds the app without index.ts, so without this
   // the URL saved in the settings table is ignored on every restart and the
